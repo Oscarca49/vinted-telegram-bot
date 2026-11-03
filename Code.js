@@ -72,7 +72,7 @@ function procesarBandejaVinted() {
       try {
         let esDuplicado = false;
         for (let j = 0; j < grupo.length; j++) {
-          const checksum = grupo[j].getChecksum();
+          const checksum = obtenerHashArchivo(grupo[j]);
           if (checksum && props.getProperty('HASH_EJE_' + checksum)) {
             esDuplicado = true;
             break;
@@ -92,8 +92,8 @@ function procesarBandejaVinted() {
         const nuevaCarpeta = destFolder.createFolder(nombreFinal);
         
         grupo.forEach(file => {
+          const checksum = obtenerHashArchivo(file);
           file.moveTo(nuevaCarpeta);
-          const checksum = file.getChecksum();
           if (checksum) props.setProperty('HASH_EJE_' + checksum, 'REGISTRADO');
         });
 
@@ -348,5 +348,15 @@ function limpiarMensajesErrorTelegram(forzarBorradoTotal) {
     }
   } catch (e) {
     props.deleteProperty('MENSAJES_ERROR_TELEGRAM');
+  }
+}
+
+function obtenerHashArchivo(file) {
+  try {
+    const bytes = file.getBlob().getBytes();
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, bytes);
+    return Utilities.base64Encode(digest);
+  } catch (e) {
+    return file.getName() + '_' + file.getSize();
   }
 }
